@@ -1,8 +1,8 @@
 trigger:
   - main
 
-pool:
-  vmImage: ubuntu-latest
+
+pool: server
 
 variables:
   gitHubEnterpriseUrl: https://github.enterprise/your-organization/your-repository
