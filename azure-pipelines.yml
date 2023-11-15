@@ -1,0 +1,74 @@
+trigger:
+  - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  gitHubEnterpriseUrl: https://github.enterprise/your-organization/your-repository
+  nexusUrl: https://nexus.example.com/repository/your-repository
+  ansiblePlaybooksPath: ./ansible
+
+stages:
+- stage: Development
+  jobs:
+  - job: DevelopmentDeployment
+    steps:
+    - task: CheckoutCode@2
+      displayName: Checkout Code
+      inputs:
+        repositoryUrl: $(gitHubEnterpriseUrl)
+        branch: $(build.sourceBranch)
+
+    - task: Python@0
+      displayName: Run Python Unit Tests
+      inputs:
+        script: tests/test_suite.py
+
+    - task: Gradle@2
+      displayName: Build Artifacts
+      inputs:
+        project: ./build.gradle
+        tasks: build
+
+    - task: Bash@3
+      displayName: Push Artifacts to Nexus
+      inputs:
+        targetScript: |
+          gradle clean
+          gradle uploadNexus
+
+    - task: Ansible@2
+      displayName: Deploy to Dev
+      inputs:
+        playbookPath: $(ansiblePlaybooksPath)/dev.yml
+
+    - task: ManualApproval@0
+      displayName: Await Developer Approval
+      inputs:
+        message: "Please review the changes and approve deployment to QA."
+
+- stage: QA
+  dependsOn: Development
+  jobs:
+  - job: QADeployment
+    steps:
+    - task: Ansible@2
+      displayName: Deploy to QA
+      inputs:
+        playbookPath: $(ansiblePlaybooksPath)/qa.yml
+
+    - task: ManualApproval@0
+      displayName: Await Manager Approval
+      inputs:
+        message: "Please review the changes and approve deployment to Production."
+
+- stage: Production
+  dependsOn: QA
+  jobs:
+  - job: ProductionDeployment
+    steps:
+    - task: Ansible@2
+      displayName: Deploy to Production
+      inputs:
+        playbookPath: $(ansiblePlaybooksPath)/prod.yml
