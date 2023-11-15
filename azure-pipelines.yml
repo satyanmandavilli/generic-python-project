@@ -14,61 +14,61 @@ stages:
   jobs:
   - job: DevelopmentDeployment
     steps:
-    - task: CheckoutCode@2
-      displayName: Checkout Code
-      inputs:
-        repositoryUrl: $(gitHubEnterpriseUrl)
-        branch: $(build.sourceBranch)
 
-    - task: Python@0
+    - task: CmdLine@2
       displayName: Run Python Unit Tests
       inputs:
-        script: tests/test_suite.py
+        script: echo tests
 
-    - task: Gradle@2
-      displayName: Build Artifacts
+    - task: CmdLine@2
+      displayName: Build Task
       inputs:
-        project: ./build.gradle
-        tasks: build
+        script: echo build
+        
 
-    - task: Bash@3
+    - task: CmdLine@2
       displayName: Push Artifacts to Nexus
       inputs:
-        targetScript: |
-          gradle clean
-          gradle uploadNexus
+        script: echo nexus push
 
-    - task: Ansible@2
+    - task: CmdLine@2
       displayName: Deploy to Dev
       inputs:
-        playbookPath: $(ansiblePlaybooksPath)/dev.yml
-
-    - task: ManualApproval@0
-      displayName: Await Developer Approval
+        script: echo ansible deploy
+    
+    - task: ManualValidation@0
+      timeoutInMinutes: 1440 # task times out in 1 day
       inputs:
-        message: "Please review the changes and approve deployment to QA."
-
+        notifyUsers: |
+          satyanmandavilli@outlook.com
+          example@example.com
+        instructions: 'Please review the changes and approve deployment to QA.'
+        onTimeout: 'reject'
 - stage: QA
   dependsOn: Development
   jobs:
   - job: QADeployment
     steps:
-    - task: Ansible@2
+    - task: CmdLine@2
       displayName: Deploy to QA
       inputs:
-        playbookPath: $(ansiblePlaybooksPath)/qa.yml
+        script: echo ansible deploy QA
 
-    - task: ManualApproval@0
-      displayName: Await Manager Approval
+    - task: ManualValidation@0
+      timeoutInMinutes: 1440 # task times out in 1 day
       inputs:
-        message: "Please review the changes and approve deployment to Production."
+        notifyUsers: |
+          satyanmandavilli@outlook.com
+          example@example.com
+        instructions: 'Please review the changes and approve deployment to QA.'
+        onTimeout: 'reject'
 
 - stage: Production
   dependsOn: QA
   jobs:
   - job: ProductionDeployment
     steps:
-    - task: Ansible@2
-      displayName: Deploy to Production
+    - task: CmdLine@2
+      displayName: Deploy to PROD
       inputs:
-        playbookPath: $(ansiblePlaybooksPath)/prod.yml
+        script: echo ansible deploy PROD
