@@ -13,27 +13,6 @@ stages:
   jobs:
   - job: DevelopmentDeployment
     steps:
-
-    - task: CmdLine@2
-      displayName: Run Python Unit Tests
-      inputs:
-        script: echo tests
-
-    - task: CmdLine@2
-      displayName: Build Task
-      inputs:
-        script: echo build
-        
-
-    - task: CmdLine@2
-      displayName: Push Artifacts to Nexus
-      inputs:
-        script: echo nexus push
-
-    - task: CmdLine@2
-      displayName: Deploy to Dev
-      inputs:
-        script: echo ansible deploy
     
     - task: ManualIntervention@8
       inputs:
@@ -44,22 +23,8 @@ stages:
   jobs:
   - job: QADeployment
     steps:
-    - task: CmdLine@2
-      displayName: Deploy to QA
-      inputs:
-        script: echo ansible deploy QA
 
     - task: ManualIntervention@8
       inputs:
         instructions: 'Please review the changes and approve deployment to Prod.'
         emailRecipients: 'satyanmandavilli@outlook.com'
-
-- stage: Production
-  dependsOn: QA
-  jobs:
-  - job: ProductionDeployment
-    steps:
-    - task: CmdLine@2
-      displayName: Deploy to PROD
-      inputs:
-        script: echo ansible deploy PROD
